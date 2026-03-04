@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="cf-2fa-verify" content="off">
 <title>Tenant Portal — VicRental Pro</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -871,7 +870,7 @@ html, body { min-height: 100%; font-family: 'DM Sans', sans-serif; background: v
   .req-right { grid-column: 1/-1; flex-direction: row; flex-wrap: wrap; }
 }
 </style>
-<script data-cfasync="false">
+<script>
 const API_BASE = 'https://vicrental-backend1-production.up.railway.app/api';
 </script>
 </head>
@@ -913,6 +912,11 @@ const API_BASE = 'https://vicrental-backend1-production.up.railway.app/api';
           </div>
           <div class="login-error" id="loginError">Incorrect email or password. Please try again.</div>
           <button class="btn-signin" onclick="doTenantLogin()">Sign In <span>→</span></button>
+          <div class="login-hint" style="margin-top:16px;">
+            <strong>Demo tenant:</strong><br>
+            Email: <strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="0a796b786b6224606562647965644a6f676b636624696567">[email&#160;protected]</a></strong><br>
+            Password: <strong>tenant123</strong>
+          </div>
         </div>
 
         <!-- Register Form -->
@@ -1257,7 +1261,7 @@ const API_BASE = 'https://vicrental-backend1-production.up.railway.app/api';
           <div class="notice-body">
             <strong>Office:</strong> (03) 9XXX XXXX · Mon–Fri, 9am–5pm<br>
             <strong>After-hours emergency:</strong> 1800 XXX XXX<br>
-            <strong>Email:</strong> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ee838f87809a8b808f808d8bae98878d9c8b809a8f82c08d8183c08f9b">[email&#160;protected]</a>
+            <strong>Email:</strong> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="8ae7ebe3e4feefe4ebe4e9efcafce3e9f8efe4feebe6a4e9e5e7a4ebff">[email&#160;protected]</a>
           </div>
         </div>
       </div>
@@ -1314,7 +1318,7 @@ const API_BASE = 'https://vicrental-backend1-production.up.railway.app/api';
 <!-- Toasts -->
 <div class="toast-wrap" id="toastWrap"></div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 // ═══════════════════════════════════════════════
 // STORAGE
 // ═══════════════════════════════════════════════
@@ -1409,7 +1413,6 @@ function doTenantLogin() {
   if (!email || !password) { errEl.textContent = 'Please enter your email and password.'; errEl.style.display = ''; return; }
 
   btn.textContent = 'Signing in…'; btn.disabled = true;
-  errEl.style.display = 'none';
 
   fetch('https://vicrental-backend1-production.up.railway.app/api/auth/tenant/login', {
     method: 'POST',
@@ -1420,24 +1423,6 @@ function doTenantLogin() {
   .then(data => {
     btn.innerHTML = 'Sign In <span>→</span>'; btn.disabled = false;
     if (data.error || !data.token) {
-      // Backend login failed — try local tenant fallback
-      const localTenants = JSON.parse(localStorage.getItem('vr_local_tenants') || '[]');
-      const localMatch = localTenants.find(t => t.email.toLowerCase() === email);
-      if (localMatch) {
-        // Tenant exists locally — create a temporary session
-        const fakeUser = {
-          id: localMatch.id || ('local-' + email),
-          firstName: localMatch.firstName,
-          lastName: localMatch.lastName,
-          email: localMatch.email,
-          phone: localMatch.phone || '',
-          property: localMatch.property || '',
-        };
-        localStorage.setItem('vr_token', 'local-' + btoa(email));
-        localStorage.setItem('vr_user', JSON.stringify(fakeUser));
-        launchPortal(fakeUser);
-        return;
-      }
       errEl.textContent = data.error || 'Incorrect email or password. Please try again.';
       errEl.style.display = '';
       document.getElementById('loginPassword').value = '';
@@ -1448,11 +1433,7 @@ function doTenantLogin() {
     localStorage.setItem('vr_user', JSON.stringify(data.user));
     launchPortal(data.user);
   })
-  .catch(() => {
-    btn.innerHTML = 'Sign In <span>→</span>'; btn.disabled = false;
-    errEl.textContent = 'Connection error. Please try again.';
-    errEl.style.display = '';
-  });
+  .catch(() => { btn.innerHTML = 'Sign In <span>→</span>'; btn.disabled = false; errEl.textContent = 'Connection error. Please try again.'; errEl.style.display = ''; });
 }
 
 function doTenantRegister() {
@@ -1674,25 +1655,6 @@ function submitRequest() {
   reqs.unshift(req);
   S.set(KEY_TREQS, reqs);
 
-  // ── Also POST to Railway backend so PM portal can see it ──
-  const token = localStorage.getItem('vr_token');
-  if (token) {
-    // Backend expects multipart/form-data (Api.upload)
-    const fd = new FormData();
-    Object.entries(req).forEach(([k, v]) => {
-      if (v !== null && v !== undefined) {
-        fd.append(k, typeof v === 'object' ? JSON.stringify(v) : String(v));
-      }
-    });
-    fetch('https://vicrental-backend1-production.up.railway.app/api/tenant-requests', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token },
-      body: fd
-    }).then(r => {
-      if (!r.ok) return r.json().then(d => console.warn('TR backend error:', d));
-    }).catch(e => console.warn('TR backend unavailable:', e));
-  }
-
   // Show success
   document.getElementById('submitSection').style.display = 'none';
   document.querySelectorAll('.maint-step').forEach(s => s.style.display = 'none');
@@ -1739,41 +1701,6 @@ function setReqFilter(f) {
 }
 
 function renderRequests() {
-  if (!currentTenant) return;
-
-  // Try to sync status updates from backend
-  const token = localStorage.getItem('vr_token');
-  if (token) {
-    fetch('https://vicrental-backend1-production.up.railway.app/api/tenant-requests/mine', {
-      headers: { 'Authorization': 'Bearer ' + token }
-    })
-    .then(r => r.ok ? r.json() : null)
-    .then(data => {
-      if (data && Array.isArray(data.requests || data)) {
-        const backendReqs = data.requests || data;
-        const local = S.get(KEY_TREQS, []);
-        // Merge: update status/pmResponse from backend into local
-        backendReqs.forEach(br => {
-          const li = local.findIndex(r => r.id === br.id);
-          if (li >= 0) {
-            local[li].status = br.status || local[li].status;
-            local[li].pmResponse = br.pmResponse || local[li].pmResponse;
-            local[li].updatedAt = br.updatedAt || local[li].updatedAt;
-          }
-        });
-        S.set(KEY_TREQS, local);
-        _renderRequestsFromLocal();
-      } else {
-        _renderRequestsFromLocal();
-      }
-    })
-    .catch(() => _renderRequestsFromLocal());
-  } else {
-    _renderRequestsFromLocal();
-  }
-}
-
-function _renderRequestsFromLocal() {
   if (!currentTenant) return;
   let reqs = S.get(KEY_TREQS, []).filter(r => r.tenantId === currentTenant.id);
 
@@ -1927,4 +1854,14 @@ function showToast(msg, type = 'ok') {
   el.innerHTML = `<span>${icons[type] || 'ℹ️'}</span><span>${msg}</span>`;
   document.getElementById('toastWrap').appendChild(el);
   setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.4s'; }, 3200);
-  setTimeout(() => el.remove(
+  setTimeout(() => el.remove(), 3600);
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  const token = localStorage.getItem('vr_token');
+  const user = (() => { try { return JSON.parse(localStorage.getItem('vr_user') || 'null'); } catch { return null; } })();
+  if (token && user && user.firstName) launchPortal(user);
+});
+</script>
+</body>
+</html>
