@@ -870,7 +870,7 @@ html, body { min-height: 100%; font-family: 'DM Sans', sans-serif; background: v
   .req-right { grid-column: 1/-1; flex-direction: row; flex-wrap: wrap; }
 }
 </style>
-<script>
+<script data-cfasync="false">
 const API_BASE = 'https://vicrental-backend1-production.up.railway.app/api';
 </script>
 </head>
@@ -914,7 +914,7 @@ const API_BASE = 'https://vicrental-backend1-production.up.railway.app/api';
           <button class="btn-signin" onclick="doTenantLogin()">Sign In <span>→</span></button>
           <div class="login-hint" style="margin-top:16px;">
             <strong>Demo tenant:</strong><br>
-            Email: <strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="592a382b383177333631372a3637193c34383035773a3634">[email&#160;protected]</a></strong><br>
+            Email: <strong>demo&#64;tenant.com</strong><br>
             Password: <strong>tenant123</strong>
           </div>
         </div>
