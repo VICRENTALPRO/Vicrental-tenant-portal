@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="cf-2fa-verify" content="off">
 <title>Tenant Portal — VicRental Pro</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -912,11 +913,6 @@ const API_BASE = 'https://vicrental-backend1-production.up.railway.app/api';
           </div>
           <div class="login-error" id="loginError">Incorrect email or password. Please try again.</div>
           <button class="btn-signin" onclick="doTenantLogin()">Sign In <span>→</span></button>
-          <div class="login-hint" style="margin-top:16px;">
-            <strong>Demo tenant:</strong><br>
-            Email: <strong>demo&#64;tenant.com</strong><br>
-            Password: <strong>tenant123</strong>
-          </div>
         </div>
 
         <!-- Register Form -->
