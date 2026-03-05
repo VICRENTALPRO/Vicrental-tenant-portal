@@ -1655,6 +1655,24 @@ function submitRequest() {
   reqs.unshift(req);
   S.set(KEY_TREQS, reqs);
 
+  // POST to Railway backend so PM portal can see it
+  const token = localStorage.getItem('vr_token');
+  if (token) {
+    const fd = new FormData();
+    Object.entries(req).forEach(([k, v]) => {
+      if (v !== null && v !== undefined) {
+        fd.append(k, typeof v === 'object' ? JSON.stringify(v) : String(v));
+      }
+    });
+    fetch('https://vicrental-backend1-production.up.railway.app/api/tenant-requests', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+      body: fd
+    }).then(r => r.json())
+      .then(d => console.log('Request synced to backend:', d))
+      .catch(e => console.warn('Backend sync failed (saved locally):', e));
+  }
+
   // Show success
   document.getElementById('submitSection').style.display = 'none';
   document.querySelectorAll('.maint-step').forEach(s => s.style.display = 'none');
